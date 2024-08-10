@@ -17,15 +17,29 @@ const Register = async (req, res) => {
             password:hashPassword
         });
         await newUser.save();
-        res.status(200).json({ success: true, message: "User Registered Successfully" });
+        res.status(200).json({ success: true, message: "User Registered Successfully",user:newUser});
     } catch (error) {
         console.error(error);
-        res.status(500).send({ success: false, message: "Something Went Wrong" });
+        res.status(500).send({ success: false, message: "Something Went Wrong"});
     }
 }
 
 
 const Login = async (req,res) => {
-    res.send('Login with controller')
+    try {
+        const {email,password} = req.body
+        const checkUser = await userModel.findOne({email})
+        if(!checkUser){
+            res.status(404).json({success: false, message: "User not Found"})
+        }
+        const comparePassword =  bcrypt.compare(password,checkUser.password);
+        if(!comparePassword){
+            res.status(303).json({success:false,message:"Invalid Credentials! Please try again"})
+        }
+        res.status(200).json({success:true,message:"Logged In Successfully",User:checkUser})
+
+    } catch (error) {
+        res.status(500).json({success:false,message:"Something went wrong"})
+    }
 }
 module.exports = {Register,Login}
