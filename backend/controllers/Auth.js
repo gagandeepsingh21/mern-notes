@@ -1,5 +1,6 @@
 const userModel = require("../models/Auth");
-const bcrypt = require("bcryptjs")
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 const Register = async (req, res) => {
     try {
         const { username, email, password } = req.body;
@@ -36,10 +37,26 @@ const Login = async (req,res) => {
         if(!comparePassword){
             res.status(303).json({success:false,message:"Invalid Credentials! Please try again"})
         }
-        res.status(200).json({success:true,message:"Logged In Successfully",User:checkUser})
+        const token = jwt.sign({userId:checkUser._id},process.env.SECRET_KEY,{expiresIn:"3d"})
+        res.cookie("token",token,{
+            httpOnly:true,
+            secure:false,
+            maxAge:3 * 24 * 3600 * 1000
+        })
+        res.status(200).json({success:true,message:"Logged In Successfully",User:checkUser,token});
 
+        
     } catch (error) {
-        res.status(500).json({success:false,message:"Something went wrong"})
+       return  res.status(500).json({success:false,message:"Something went wrong"})
     }
 }
-module.exports = {Register,Login}
+
+const Logout =  async(req,res) => {
+    try {
+        res.clearCookie("token")
+        res.status(200).json({success:true,message:"Logged Out Successfully"});
+    } catch (error) {
+        return res.status(500).json({success:false,message:"Something went wrong"})
+    }
+}
+module.exports = {Register,Login,Logout}
